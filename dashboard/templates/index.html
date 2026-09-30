@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>RF Test Dashboard</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; }
+    .PASS { color: green; font-weight: bold; }
+    .FAIL { color: red; font-weight: bold; }
+    #error-msg { color: red; }
+    table { border-collapse: collapse; margin-top: 1rem; }
+    td, th { border: 1px solid #ccc; padding: 4px 10px; }
+  </style>
+</head>
+<body>
+  <h1>RF Test Dashboard</h1>
+  <p>Instrument: <span id="idn">{{ idn }}</span></p>
+
+  <form method="post" action="/measure">
+    <label for="freq-input">Frequency (MHz)</label>
+    <input id="freq-input" name="freq_mhz" type="text">
+    <button id="measure-btn" type="submit">Measure</button>
+  </form>
+
+  {% if error %}<p id="error-msg">{{ error }}</p>{% endif %}
+
+  <table id="results-table">
+    <tr><th>Frequency (MHz)</th><th>Power (dBm)</th><th>Result</th></tr>
+    {% for r in results %}
+    <tr class="result-row">
+      <td class="freq">{{ r.freq_mhz }}</td>
+      <td class="power">{{ r.power }}</td>
+      <td class="status {{ r.status }}">{{ r.status }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>

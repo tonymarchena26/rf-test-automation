@@ -1,0 +1,33 @@
+# Three containers on one private network, talking over TCP like a real lab:
+#   instrument  -> SCPI simulator on port 5025
+#   dashboard   -> Flask web app on port 8080 (talks to "instrument")
+#   tests       -> pytest + Selenium, talks to both over the network
+services:
+  instrument:
+    build: .
+    command: python -m instrument_sim.simulator
+    environment:
+      - SIM_FAULT=${SIM_FAULT:-}
+
+  dashboard:
+    build: .
+    command: python -m dashboard.app
+    environment:
+      - INSTRUMENT_HOST=instrument
+    ports:
+      - "8080:8080"
+    depends_on:
+      - instrument
+
+  tests:
+    build: .
+    command: sh -c "sleep 3 && pytest"
+    environment:
+      - INSTRUMENT_HOST=instrument
+      - DASHBOARD_URL=http://dashboard:8080
+    volumes:
+      - ./reports:/app/reports
+      - ./artifacts:/app/artifacts
+    depends_on:
+      - instrument
+      - dashboard

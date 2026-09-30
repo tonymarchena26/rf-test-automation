@@ -1,0 +1,57 @@
+# CI pipeline: runs on every push and pull request.
+# Quality gates: lint must pass, all tests must pass, coverage >= 80%.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install flake8
+      - name: Lint (quality gate 1)
+        run: flake8
+
+  test:
+    needs: lint            # only test if lint passed
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Run tests (quality gates 2 and 3)
+        run: pytest --cov=framework --cov-fail-under=80
+
+      - name: AI failure triage
+        if: always()       # run even when tests fail - that's the point
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python tools/ai_triage.py reports/junit.xml
+
+      - name: Upload reports and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            reports/
+            artifacts/
+
+  docker:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image and run the suite in containers
+        run: docker compose up --build --abort-on-container-exit --exit-code-from tests
