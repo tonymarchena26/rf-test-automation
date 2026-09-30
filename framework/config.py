@@ -12,4 +12,4 @@ HEADLESS = os.getenv("HEADLESS", "1") == "1"
 
 # Test limits: the expected level and the allowed tolerance
 EXPECTED_POWER_DBM = -10.0
-POWER_TOLERANCE_DB = 1.0
+POWER_TOLERANCE_DB = 0.3
